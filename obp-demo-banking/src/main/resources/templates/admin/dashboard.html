@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - OBP Demo Banking</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Admin Dashboard</h1>
+            <a th:href="@{/admin/logout}" class="btn btn-secondary">Logout</a>
+        </header>
+
+        <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+        <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+        <div class="card">
+            <h2>Create New Customer</h2>
+            <form th:action="@{/admin/users}" th:object="${createUserRequest}" method="post">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="username">Username *</label>
+                        <input type="text" id="username" th:field="*{username}" required>
+                        <span th:if="${#fields.hasErrors('username')}" 
+                              th:errors="*{username}" class="error-text"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" th:field="*{email}" required>
+                        <span th:if="${#fields.hasErrors('email')}" 
+                              th:errors="*{email}" class="error-text"></span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input type="password" id="password" th:field="*{password}" required>
+                        <span th:if="${#fields.hasErrors('password')}" 
+                              th:errors="*{password}" class="error-text"></span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" th:field="*{firstName}" required>
+                        <span th:if="${#fields.hasErrors('firstName')}" 
+                              th:errors="*{firstName}" class="error-text"></span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input type="text" id="lastName" th:field="*{lastName}" required>
+                    <span th:if="${#fields.hasErrors('lastName')}" 
+                          th:errors="*{lastName}" class="error-text"></span>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Create Customer</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Created Customers</h2>
+            <div th:if="${users == null or users.isEmpty()}" class="empty-state">
+                <p>No customers created yet. Create one above.</p>
+            </div>
+            <table th:if="${users != null and !users.isEmpty()}">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="user : ${users}">
+                        <td th:text="${user.userId}"></td>
+                        <td th:text="${user.username}"></td>
+                        <td th:text="${user.email}"></td>
+                        <td th:text="${user.firstName + ' ' + user.lastName}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

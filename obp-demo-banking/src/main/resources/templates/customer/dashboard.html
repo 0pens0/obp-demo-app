@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - OBP Demo Banking</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Welcome, <span th:text="${dashboard.username}"></span></h1>
+            <a th:href="@{/customer/logout}" class="btn btn-secondary">Logout</a>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Accounts Section -->
+            <div class="card">
+                <h2>Accounts</h2>
+                <div th:if="${dashboard.accounts == null or dashboard.accounts.isEmpty()}" 
+                     class="empty-state">
+                    <p>No accounts found</p>
+                </div>
+                <div th:if="${dashboard.accounts != null and !dashboard.accounts.isEmpty()}">
+                    <div th:each="account : ${dashboard.accounts}" class="account-item">
+                        <div class="account-header">
+                            <h3 th:text="${account.label != null ? account.label : account.number}"></h3>
+                            <span class="account-type" th:text="${account.type}"></span>
+                        </div>
+                        <div class="account-balance" th:if="${account.balance != null}">
+                            <span class="amount" th:text="${account.balance.currency + ' ' + account.balance.amount}"></span>
+                        </div>
+                        <div class="account-details">
+                            <p><strong>Account Number:</strong> <span th:text="${account.number}"></span></p>
+                            <p th:if="${account.iban}"><strong>IBAN:</strong> <span th:text="${account.iban}"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="card">
+                <h2>Recent Transactions</h2>
+                <div th:if="${dashboard.recentTransactions == null or dashboard.recentTransactions.isEmpty()}" 
+                     class="empty-state">
+                    <p>No transactions found</p>
+                </div>
+                <div th:if="${dashboard.recentTransactions != null and !dashboard.recentTransactions.isEmpty()}">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="transaction : ${dashboard.recentTransactions}">
+                                <td th:text="${transaction.description != null ? transaction.description : 'Transaction'}"></td>
+                                <td th:text="${transaction.value != null ? (transaction.value.currency + ' ' + transaction.value.amount) : 'N/A'}"></td>
+                                <td th:text="${transaction.posted != null ? transaction.posted : 'N/A'}"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Counterparties -->
+            <div class="card">
+                <h2>Counterparties</h2>
+                <div th:if="${dashboard.counterparties == null or dashboard.counterparties.isEmpty()}" 
+                     class="empty-state">
+                    <p>No counterparties found</p>
+                </div>
+                <div th:if="${dashboard.counterparties != null and !dashboard.counterparties.isEmpty()}">
+                    <ul class="counterparty-list">
+                        <li th:each="counterparty : ${dashboard.counterparties}">
+                            <strong th:text="${counterparty.name}"></strong>
+                            <span th:if="${counterparty.accountNumber}" 
+                                  th:text="'(' + counterparty.accountNumber + ')'"></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="card summary-card">
+                <h2>Account Summary</h2>
+                <div class="summary-item">
+                    <span class="summary-label">Total Balance:</span>
+                    <span class="summary-value" 
+                          th:text="${dashboard.totalBalance != null ? (dashboard.currency + ' ' + dashboard.totalBalance) : 'N/A'}"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Widget -->
+    <div id="chatbot-widget" class="chatbot-widget">
+        <div id="chatbot-toggle" class="chatbot-toggle">
+            <span>💬</span>
+        </div>
+        <div id="chatbot-container" class="chatbot-container" style="display: none;">
+            <div class="chatbot-header">
+                <h3>Banking Assistant</h3>
+                <button id="chatbot-close" class="chatbot-close">×</button>
+            </div>
+            <div id="chatbot-messages" class="chatbot-messages"></div>
+            <div class="chatbot-input-container">
+                <input type="text" id="chatbot-input" placeholder="Ask me about your accounts..." />
+                <button id="chatbot-send" class="btn btn-primary">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotContainer = document.getElementById('chatbot-container');
+        const chatbotClose = document.getElementById('chatbot-close');
+        const chatbotSend = document.getElementById('chatbot-send');
+        const chatbotInput = document.getElementById('chatbot-input');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+
+        chatbotToggle.addEventListener('click', () => {
+            chatbotContainer.style.display = chatbotContainer.style.display === 'none' ? 'block' : 'none';
+        });
+
+        chatbotClose.addEventListener('click', () => {
+            chatbotContainer.style.display = 'none';
+        });
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'message user-message' : 'message bot-message';
+            messageDiv.textContent = content;
+            chatbotMessages.appendChild(messageDiv);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+
+        chatbotSend.addEventListener('click', async () => {
+            const message = chatbotInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            chatbotInput.value = '';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                addMessage(data.response, false);
+            } catch (error) {
+                addMessage('Sorry, I encountered an error. Please try again.', false);
+            }
+        });
+
+        chatbotInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                chatbotSend.click();
+            }
+        });
+    </script>
+</body>
+</html>
