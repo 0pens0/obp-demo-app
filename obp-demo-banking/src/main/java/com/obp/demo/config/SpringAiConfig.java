@@ -2,6 +2,7 @@ package com.obp.demo.config;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.ai.vectorstore.PgVectorStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
  * When deployed to Tanzu, the service binding will automatically inject
  * the necessary credentials (e.g., OPENAI_API_KEY) which Spring Boot
  * will use to configure the OpenAiChatModel bean.
+ * 
+ * Also configures PostgreSQL vector store for RAG capabilities.
  */
 @Configuration
 public class SpringAiConfig {
@@ -30,4 +33,13 @@ public class SpringAiConfig {
     public ChatClient chatClient(OpenAiChatModel chatModel) {
         return ChatClient.builder(chatModel).build();
     }
+    
+    /**
+     * PgVectorStore is auto-configured by Spring AI when:
+     * - PostgreSQL datasource is available
+     * - spring-ai-pgvector-store-spring-boot-starter is on classpath
+     * - Configuration properties are set in application.yml
+     * 
+     * The vector store will be automatically created and managed by Spring AI.
+     */
 }

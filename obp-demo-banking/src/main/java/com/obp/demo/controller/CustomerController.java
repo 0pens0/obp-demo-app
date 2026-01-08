@@ -77,7 +77,7 @@ public class CustomerController {
     }
 
     @GetMapping("/dashboard")
-    public String dashboard(HttpSession session, Model model) {
+    public String dashboard(HttpSession session, Model model, RedirectAttributes redirectAttributes) {
         String token = (String) session.getAttribute("obpToken");
         String username = (String) session.getAttribute("username");
 
@@ -93,25 +93,22 @@ public class CustomerController {
             List<Account> accounts = obpApiService.getAccounts(token);
             dashboard.setAccounts(accounts);
 
-            // Get transactions from first account
-            List<Transaction> allTransactions = Collections.emptyList();
+            // Get transactions and counterparties from first account
             if (!accounts.isEmpty()) {
                 String bankId = obpApiService.getBankId(token);
                 if (bankId != null) {
-                    allTransactions = obpApiService.getTransactions(
-                            token, bankId, accounts.get(0).getId());
+                    String accountId = accounts.get(0).getId();
+                    
+                    // Get transactions
+                    List<Transaction> allTransactions = obpApiService.getTransactions(
+                            token, bankId, accountId);
                     // Limit to recent 10 transactions
                     dashboard.setRecentTransactions(
                             allTransactions.stream().limit(10).collect(Collectors.toList()));
-                }
-            }
-
-            // Get counterparties from first account
-            if (!accounts.isEmpty()) {
-                String bankId = obpApiService.getBankId(token);
-                if (bankId != null) {
+                    
+                    // Get counterparties
                     List<Counterparty> counterparties = obpApiService.getCounterparties(
-                            token, bankId, accounts.get(0).getId());
+                            token, bankId, accountId);
                     dashboard.setCounterparties(counterparties);
                 }
             }

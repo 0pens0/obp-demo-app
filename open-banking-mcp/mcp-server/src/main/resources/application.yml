@@ -1,0 +1,36 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: obp-mcp-server
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:}
+      chat:
+        options:
+          model: gpt-4
+          temperature: 0.7
+
+# OBP API Configuration
+obp:
+  api:
+    base-url: https://apisandbox.openbankproject.com
+    api-key: ${OBP_API_KEY:your-api-key-here}
+    version: v5.1.0
+
+# Actuator configuration for Tanzu
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging
+logging:
+  level:
+    com.openbanking.mcpserver: DEBUG
+    org.springframework.web: INFO

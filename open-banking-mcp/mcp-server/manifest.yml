@@ -1,0 +1,16 @@
+---
+applications:
+  - name: obp-mcp-server
+    memory: 512M
+    instances: 1
+    buildpacks:
+      - java_buildpack
+    path: target/mcp-server-1.0.0-SNAPSHOT.jar
+    env:
+      OBP_API_KEY: ((OBP_API_KEY))
+      SPRING_PROFILES_ACTIVE: cloud
+      JAVA_OPTS: -Xmx384m
+    health-check-type: http
+    health-check-http-endpoint: /actuator/health
+    routes:
+      - route: obp-mcp-server.apps.example.com

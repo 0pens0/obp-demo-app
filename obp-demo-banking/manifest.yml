@@ -1,0 +1,19 @@
+---
+applications:
+  - name: obp-demo-banking
+    memory: 1G
+    instances: 1
+    buildpacks:
+      - java_buildpack
+    path: target/demo-banking-1.0.0-SNAPSHOT.jar
+    env:
+      OBP_API_KEY: ((OBP_API_KEY))
+      SPRING_PROFILES_ACTIVE: cloud
+      JAVA_OPTS: -Xmx768m
+    services:
+      - postgres-vector-db
+      - llm-service
+    health-check-type: http
+    health-check-http-endpoint: /actuator/health
+    routes:
+      - route: obp-demo-banking.apps.example.com

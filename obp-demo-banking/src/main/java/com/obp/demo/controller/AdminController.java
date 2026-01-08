@@ -2,6 +2,7 @@ package com.obp.demo.controller;
 
 import com.obp.demo.dto.CreateUserRequest;
 import com.obp.demo.model.ObpUser;
+import com.obp.demo.service.AdminAuthService;
 import com.obp.demo.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.List;
 public class AdminController {
 
     private final UserService userService;
+    private final AdminAuthService adminAuthService;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -36,8 +38,7 @@ public class AdminController {
 
     @PostMapping("/authenticate")
     public String authenticate(String username, String password, RedirectAttributes redirectAttributes) {
-        // Simple admin authentication - in production, use proper authentication
-        if ("admin".equals(username) && "admin".equals(password)) {
+        if (adminAuthService.authenticate(username, password)) {
             Authentication auth = new UsernamePasswordAuthenticationToken(
                     username,
                     null,

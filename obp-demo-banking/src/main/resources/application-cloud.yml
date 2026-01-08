@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: ${vcap.services.postgres-vector-db.credentials.jdbc_uri:${vcap.services.postgres-vector-db.credentials.uri}}
+    username: ${vcap.services.postgres-vector-db.credentials.username:}
+    password: ${vcap.services.postgres-vector-db.credentials.password:}
+  ai:
+    openai:
+      api-key: ${vcap.services.llm-service.credentials.api-key:${OPENAI_API_KEY:}}
+      chat:
+        options:
+          model: ${vcap.services.llm-service.credentials.model:gpt-4}
+          temperature: 0.7
+
+logging:
+  level:
+    com.obp.demo: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN

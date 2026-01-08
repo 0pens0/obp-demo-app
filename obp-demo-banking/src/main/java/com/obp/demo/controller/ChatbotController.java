@@ -57,7 +57,8 @@ public class ChatbotController {
                 }
             }
 
-            String response = chatbotService.getChatResponse(userMessage, dashboard);
+            String username = (String) session.getAttribute("username");
+            String response = chatbotService.getChatResponse(userMessage, dashboard, username != null ? username : "anonymous");
             return ResponseEntity.ok(Map.of("response", response));
         } catch (Exception e) {
             log.error("Error processing chat message", e);

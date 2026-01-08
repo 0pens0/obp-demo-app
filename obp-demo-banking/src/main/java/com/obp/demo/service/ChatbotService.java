@@ -4,7 +4,13 @@ import com.obp.demo.model.CustomerDashboard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -12,28 +18,52 @@ import org.springframework.stereotype.Service;
 public class ChatbotService {
 
     private final ChatClient chatClient;
+    private final VectorStoreService vectorStoreService;
 
-    public String getChatResponse(String userMessage, CustomerDashboard dashboard) {
+    public String getChatResponse(String userMessage, CustomerDashboard dashboard, String username) {
         try {
-            String context = buildContext(dashboard);
+            // Retrieve similar context from vector store (RAG)
+            List<Document> similarDocs = vectorStoreService.searchSimilar(userMessage, 3);
+            String retrievedContext = similarDocs.stream()
+                    .map(Document::getContent)
+                    .collect(Collectors.joining("\n\n"));
+            
+            String currentContext = buildContext(dashboard);
+            
+            // Combine retrieved context with current dashboard context
+            String fullContext = retrievedContext.isEmpty() 
+                ? currentContext 
+                : "Previous similar conversations:\n" + retrievedContext + "\n\nCurrent account information:\n" + currentContext;
             
             String prompt = String.format(
                 "You are a helpful banking assistant. Answer questions about the customer's banking information. " +
-                "Here is the customer's current banking data:\n\n%s\n\n" +
+                "Use the following context to provide accurate and helpful answers:\n\n%s\n\n" +
                 "Customer question: %s\n\n" +
                 "Provide a helpful and concise answer. If the question is not related to banking or the customer's data, politely redirect.",
-                context,
+                fullContext,
                 userMessage
             );
 
-            return chatClient.prompt()
+            String response = chatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
+            
+            // Store chat history in vector store for future RAG
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("username", username);
+            metadata.put("timestamp", System.currentTimeMillis());
+            vectorStoreService.addChatHistory(username, userMessage, response, metadata);
+            
+            return response;
         } catch (Exception e) {
             log.error("Error getting chat response: {}", e.getMessage(), e);
             return "I apologize, but I'm having trouble processing your request right now. Please try again later.";
         }
+    }
+    
+    public String getChatResponse(String userMessage, CustomerDashboard dashboard) {
+        return getChatResponse(userMessage, dashboard, "anonymous");
     }
 
     private String buildContext(CustomerDashboard dashboard) {

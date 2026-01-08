@@ -1,0 +1,39 @@
+---
+# Combined manifest for deploying both OBP Demo Banking and MCP Server applications
+# Usage: cf push -f manifest.yml
+
+applications:
+  # OBP Demo Banking Application
+  - name: obp-demo-banking
+    memory: 1G
+    instances: 1
+    buildpacks:
+      - java_buildpack
+    path: obp-demo-banking/target/demo-banking-1.0.0-SNAPSHOT.jar
+    env:
+      OBP_API_KEY: ((OBP_API_KEY))
+      SPRING_PROFILES_ACTIVE: cloud
+      JAVA_OPTS: -Xmx768m
+    services:
+      - postgres-vector-db
+      - llm-service
+    health-check-type: http
+    health-check-http-endpoint: /actuator/health
+    routes:
+      - route: obp-demo-banking.apps.example.com
+
+  # OBP MCP Server Application
+  - name: obp-mcp-server
+    memory: 512M
+    instances: 1
+    buildpacks:
+      - java_buildpack
+    path: open-banking-mcp/mcp-server/target/mcp-server-1.0.0-SNAPSHOT.jar
+    env:
+      OBP_API_KEY: ((OBP_API_KEY))
+      SPRING_PROFILES_ACTIVE: cloud
+      JAVA_OPTS: -Xmx384m
+    health-check-type: http
+    health-check-http-endpoint: /actuator/health
+    routes:
+      - route: obp-mcp-server.apps.example.com
